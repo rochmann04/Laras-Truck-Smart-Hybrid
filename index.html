@@ -1,0 +1,1752 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LARAS TRUCK - Smart Hybrid Waste Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Reset dan Variabel */
+        :root {
+            --primary: #6c87b5;
+            --primary-light: #8fa8d0;
+            --primary-dark: #4a6594;
+            --secondary: #a8c6a0;
+            --accent: #d4a5a5;
+            --dark: #4a5568;
+            --light: #f7fafc;
+            --gray: #e2e8f0;
+            --text: #4a5568;
+            --white: #ffffff;
+            --card-bg: rgba(255, 255, 255, 0.9);
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            --gradient: linear-gradient(135deg, #8fa8d0 0%, #a8c6a0 100%);
+            --sidebar-bg: #6c87b5;
+            
+            /* Warna soft untuk jenis sampah */
+            --organik: #b4d4b4;
+            --anorganik: #b4c4e8;
+            
+            /* Mode Malam */
+            --bg-night: #1a1a2e;
+            --card-bg-night: #16213e;
+            --text-night: #e6e6e6;
+            --sidebar-bg-night: #0f3460;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        body {
+            background-color: var(--light);
+            color: var(--text);
+            line-height: 1.6;
+            display: flex;
+            min-height: 100vh;
+            transition: all 0.3s ease;
+        }
+        
+        body.night-mode {
+            background-color: var(--bg-night);
+            color: var(--text-night);
+        }
+        
+        /* Layout */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* Header dengan Kop Website - DIATAS SIDEBAR */
+        .main-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background-color: var(--white);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--gray);
+        }
+        
+        body.night-mode .main-header {
+            background-color: var(--card-bg-night);
+            border-bottom: 1px solid #333;
+        }
+        
+        .logo-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+        }
+        
+        .logo-text .main {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .logo-text .sub {
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--dark);
+        }
+        
+        body.night-mode .logo-text .main {
+            color: var(--secondary);
+        }
+        
+        body.night-mode .logo-text .sub {
+            color: var(--text-night);
+        }
+        
+        .logo-icon {
+            font-size: 2.5rem;
+            color: var(--primary);
+        }
+        
+        body.night-mode .logo-icon {
+            color: var(--secondary);
+        }
+        
+        .header-status {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #a8c6a0;
+        }
+        
+        .status-indicator.online {
+            background-color: #a8c6a0;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        /* Mode Toggle */
+        .mode-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: var(--primary);
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(30px);
+        }
+        
+        /* Sidebar Kanan */
+        .sidebar {
+            width: 220px;
+            background: var(--sidebar-bg);
+            color: var(--white);
+            height: 100vh;
+            position: fixed;
+            right: 0;
+            top: 80px; /* Sesuaikan dengan tinggi header */
+            padding: 20px 0;
+            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+        }
+        
+        body.night-mode .sidebar {
+            background: var(--sidebar-bg-night);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+        
+        .logo h1 {
+            font-size: 1.5rem;
+            margin-left: 12px;
+            font-weight: 700;
+            color: var(--white);
+        }
+        
+        .sidebar-nav {
+            padding: 0 10px;
+        }
+        
+        .sidebar-nav ul {
+            list-style: none;
+        }
+        
+        .sidebar-nav li {
+            margin-bottom: 8px;
+        }
+        
+        .sidebar-nav a {
+            color: var(--white);
+            text-decoration: none;
+            padding: 12px 16px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .sidebar-nav a::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            transition: left 0.3s ease;
+        }
+        
+        .sidebar-nav a:hover::before,
+        .sidebar-nav a.active::before {
+            left: 0;
+        }
+        
+        .sidebar-nav a i {
+            margin-right: 12px;
+            font-size: 1.1rem;
+            width: 20px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        
+        .sidebar-nav a:hover i,
+        .sidebar-nav a.active i {
+            transform: scale(1.1);
+        }
+        
+        .sidebar-nav a:hover, 
+        .sidebar-nav a.active {
+            background-color: rgba(255, 255, 255, 0.15);
+            color: var(--white);
+        }
+        
+        /* Main Content */
+        main {
+            flex: 1;
+            margin-right: 220px;
+            padding: 110px 30px 30px 30px; /* Ditambah padding top untuk header */
+            min-height: 100vh;
+            transition: all 0.3s ease;
+        }
+        
+        .page {
+            display: none;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        
+        .page.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1587332278431-202f5c5a0b63?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80');
+            background-size: cover;
+            background-position: center;
+            color: var(--white);
+            padding: 80px 0;
+            text-align: center;
+            border-radius: 12px;
+            margin-bottom: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .hero h2 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+        
+        .hero p {
+            font-size: 1.2rem;
+            margin: 0 auto 40px;
+            font-weight: 300;
+            line-height: 1.8;
+        }
+        
+        .btn {
+            display: inline-block;
+            background-color: var(--secondary);
+            color: var(--dark);
+            padding: 12px 28px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+            margin: 8px;
+            box-shadow: var(--shadow);
+        }
+        
+        .btn:hover {
+            background-color: #97b98d;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid var(--white);
+            color: var(--white);
+        }
+        
+        .btn-outline:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+        
+        /* Card dan Section */
+        .section-title {
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            color: var(--dark);
+            font-weight: 700;
+            position: relative;
+            padding-bottom: 10px;
+        }
+        
+        body.night-mode .section-title {
+            color: var(--text-night);
+        }
+        
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 60px;
+            height: 4px;
+            background: var(--gradient);
+            border-radius: 2px;
+        }
+        
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            padding: 20px;
+            margin-bottom: 25px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        
+        body.night-mode .card {
+            background-color: var(--card-bg-night);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+        }
+        
+        .card h3 {
+            color: var(--primary);
+            margin-bottom: 15px;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+        
+        body.night-mode .card h3 {
+            color: var(--secondary);
+        }
+        
+        /* Grid Layout */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        /* Tabel dengan Warna Soft */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        table th, table td {
+            padding: 14px 18px;
+            text-align: left;
+            border-bottom: 1px solid var(--gray);
+        }
+        
+        body.night-mode table th, 
+        body.night-mode table td {
+            border-bottom: 1px solid #444;
+        }
+        
+        table th {
+            background-color: var(--primary);
+            color: var(--white);
+            font-weight: 600;
+        }
+        
+        table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        table tr:hover {
+            background-color: rgba(108, 135, 181, 0.05);
+        }
+        
+        body.night-mode table tr:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        
+        /* Progress Bar dengan Warna Soft */
+        .progress-container {
+            margin-bottom: 18px;
+        }
+        
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .progress-bar {
+            height: 10px;
+            background-color: var(--gray);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        body.night-mode .progress-bar {
+            background-color: #444;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            border-radius: 5px;
+            transition: width 0.8s ease;
+        }
+        
+        .progress-organik {
+            background-color: var(--organik);
+        }
+        
+        .progress-anorganik {
+            background-color: var(--anorganik);
+        }
+        
+        /* Status Indicators */
+        .status {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        
+        .status-online {
+            background-color: rgba(168, 198, 160, 0.3);
+            color: #5a7a52;
+        }
+        
+        body.night-mode .status-online {
+            background-color: rgba(168, 198, 160, 0.2);
+            color: #a8c6a0;
+        }
+        
+        .status-offline {
+            background-color: rgba(212, 165, 165, 0.3);
+            color: #9c6e6e;
+        }
+        
+        /* Footer */
+        footer {
+            background-color: var(--primary);
+            color: var(--white);
+            padding: 25px 0;
+            text-align: center;
+            margin-top: 40px;
+            border-radius: 8px;
+        }
+        
+        body.night-mode footer {
+            background-color: var(--primary-dark);
+        }
+        
+        /* Dashboard Layout Modern */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+        
+        .data-section {
+            margin-bottom: 35px;
+        }
+        
+        .temperature-box {
+            background: var(--gradient);
+            color: var(--white);
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 25px;
+            box-shadow: var(--shadow);
+        }
+        
+        .temperature-value {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .temperature-status {
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+        
+        .waste-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 25px;
+        }
+        
+        .waste-item {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s;
+            border-left: 6px solid;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        body.night-mode .waste-item {
+            background-color: var(--card-bg-night);
+        }
+        
+        .waste-item.organik {
+            border-left-color: var(--organik);
+        }
+        
+        .waste-item.anorganik {
+            border-left-color: var(--anorganik);
+        }
+        
+        .waste-item:hover {
+            transform: translateY(-5px);
+        }
+        
+        .waste-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .waste-icon {
+            font-size: 2rem;
+            margin-right: 15px;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        
+        .waste-icon.organik {
+            background-color: var(--organik);
+            color: #5a7a52;
+        }
+        
+        .waste-icon.anorganik {
+            background-color: var(--anorganik);
+            color: #4a6594;
+        }
+        
+        .waste-name {
+            font-weight: 600;
+            color: var(--primary);
+            font-size: 1.3rem;
+        }
+        
+        body.night-mode .waste-name {
+            color: var(--secondary);
+        }
+        
+        .waste-description {
+            color: var(--text);
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+        }
+        
+        body.night-mode .waste-description {
+            color: var(--text-night);
+        }
+        
+        .motor-status {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            margin-top: 25px;
+            text-align: center;
+            border-left: 4px solid var(--secondary);
+        }
+        
+        body.night-mode .motor-status {
+            background-color: var(--card-bg-night);
+        }
+        
+        .motor-status h3 {
+            color: var(--primary);
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        body.night-mode .motor-status h3 {
+            color: var(--secondary);
+        }
+        
+        /* Status Motor dengan warna hijau */
+        .motor-hybrid-status {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        
+        .motor-active {
+            color: #4CAF50;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        
+        /* Real-time Monitor Styling Modern */
+        .monitor-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        
+        .sensor-list {
+            list-style-type: none;
+            margin-top: 20px;
+        }
+        
+        .sensor-list li {
+            padding: 14px 0;
+            border-bottom: 1px solid var(--gray);
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            transition: background-color 0.3s;
+        }
+        
+        body.night-mode .sensor-list li {
+            border-bottom: 1px solid #444;
+        }
+        
+        .sensor-list li:hover {
+            background-color: rgba(108, 135, 181, 0.05);
+            border-radius: 6px;
+            padding-left: 10px;
+        }
+        
+        body.night-mode .sensor-list li:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        
+        .sensor-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .sensor-list li i {
+            margin-right: 12px;
+            color: var(--primary);
+            font-size: 1.2rem;
+            width: 24px;
+            text-align: center;
+        }
+        
+        body.night-mode .sensor-list li i {
+            color: var(--secondary);
+        }
+        
+        .chart-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 25px;
+        }
+        
+        .chart-title {
+            font-size: 1.3rem;
+            margin-bottom: 18px;
+            color: var(--primary);
+            font-weight: 600;
+        }
+        
+        body.night-mode .chart-title {
+            color: var(--secondary);
+        }
+        
+        .chart-box {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+        }
+        
+        body.night-mode .chart-box {
+            background-color: var(--card-bg-night);
+        }
+        
+        /* MODIFIKASI TAMBAHAN */
+        
+        /* Diagram Jenis Sampah */
+        .waste-chart-container {
+            width: 100%;
+            height: 200px;
+            margin-top: 15px;
+        }
+        
+        /* Status Konektivitas */
+        .connectivity-status {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .status-bubble {
+            display: inline-block;
+            padding: 8px 15px;
+            border-radius: 20px;
+            background-color: rgba(168, 198, 160, 0.2);
+            margin-right: 10px;
+            font-weight: 500;
+        }
+        
+        .status-bubble.connected {
+            background-color: rgba(168, 198, 160, 0.3);
+            color: #5a7a52;
+        }
+        
+        body.night-mode .status-bubble.connected {
+            background-color: rgba(168, 198, 160, 0.2);
+            color: #a8c6a0;
+        }
+        
+        /* Jadwal Perawatan */
+        .maintenance-list {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        
+        .maintenance-item {
+            padding: 12px 0;
+            border-bottom: 1px solid var(--gray);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        body.night-mode .maintenance-item {
+            border-bottom: 1px solid #444;
+        }
+        
+        .maintenance-item:last-child {
+            border-bottom: none;
+        }
+        
+        /* SDG Impact dengan Logo */
+        .sdg-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .sdg-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            padding: 15px;
+            background-color: rgba(255, 255, 255, 0.7);
+            border-radius: 8px;
+        }
+        
+        body.night-mode .sdg-item {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .sdg-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+        
+        .sdg-7 { background-color: #FDB813; }
+        .sdg-11 { background-color: #FD6925; }
+        .sdg-12 { background-color: #BF8B2E; }
+        .sdg-13 { background-color: #48773E; }
+        
+        /* Fitur Utama */
+        .feature-list {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        
+        .feature-item {
+            padding: 10px 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        
+        .feature-item i {
+            color: var(--secondary);
+            margin-top: 3px;
+        }
+        
+        /* Tim Pengembang */
+        .team-member {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            overflow: hidden;
+        }
+        
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        /* Analisis Kinerja */
+        .performance-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .performance-item {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s;
+        }
+        
+        body.night-mode .performance-item {
+            background-color: var(--card-bg-night);
+        }
+        
+        .performance-item:hover {
+            transform: translateY(-5px);
+        }
+        
+        .performance-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+        
+        body.night-mode .performance-value {
+            color: var(--secondary);
+        }
+        
+        .performance-label {
+            font-size: 1rem;
+            color: var(--text);
+            font-weight: 500;
+        }
+        
+        body.night-mode .performance-label {
+            color: var(--text-night);
+        }
+        
+        /* Jenis Sampah Terdeteksi */
+        .waste-detection {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .waste-type {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background-color: rgba(255, 255, 255, 0.7);
+            border-radius: 8px;
+            border-left: 4px solid;
+        }
+        
+        body.night-mode .waste-type {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .waste-type.organik {
+            border-left-color: var(--organik);
+        }
+        
+        .waste-type.anorganik {
+            border-left-color: var(--anorganik);
+        }
+        
+        .waste-type-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .waste-type-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+        
+        /* Form Login yang Lebih Estetik */
+        .login-container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 30px;
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+        }
+        
+        body.night-mode .login-container {
+            background-color: var(--card-bg-night);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--gray);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border 0.3s;
+            background-color: var(--white);
+        }
+        
+        body.night-mode .form-control {
+            background-color: #2a2a3e;
+            border: 1px solid #444;
+            color: var(--text-night);
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+        
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary);
+            color: var(--white);
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .btn-login:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        /* Copyright */
+        .copyright {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--gray);
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+        
+        body.night-mode .copyright {
+            border-top: 1px solid #444;
+            color: var(--text-night);
+        }
+        
+        /* Responsif */
+        @media (max-width: 968px) {
+            .dashboard-grid, .monitor-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .hero h2 {
+                font-size: 2.2rem;
+            }
+            
+            .hero p {
+                font-size: 1.1rem;
+            }
+            
+            .sdg-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .performance-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 70px;
+                overflow: visible;
+                top: 70px;
+            }
+            
+            .logo h1, .sidebar-nav a span {
+                display: none;
+            }
+            
+            .logo {
+                justify-content: center;
+                padding: 0 10px 20px;
+            }
+            
+            .logo-icon {
+                margin-right: 0;
+            }
+            
+            .sidebar-nav a {
+                justify-content: center;
+                padding: 12px;
+            }
+            
+            .sidebar-nav a i {
+                margin-right: 0;
+            }
+            
+            main {
+                margin-right: 70px;
+                padding: 90px 20px 20px 20px;
+            }
+            
+            .hero {
+                padding: 60px 0;
+            }
+            
+            .hero h2 {
+                font-size: 1.8rem;
+            }
+            
+            .hero p {
+                font-size: 1rem;
+            }
+            
+            .performance-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .logo-text .main {
+                font-size: 1.5rem;
+            }
+            
+            .logo-text .sub {
+                font-size: 0.8rem;
+            }
+            
+            .logo-icon {
+                font-size: 2rem;
+            }
+            
+            .main-header {
+                padding: 10px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header dengan Kop Website - DIATAS SEGALANYA -->
+    <header class="main-header">
+        <div class="logo-header">
+            <i class="fas fa-truck-loading logo-icon"></i>
+            <div class="logo-text">
+                <div class="main">LARAS TRUCK</div>
+                <div class="sub">Smart Hybrid Waste Management</div>
+            </div>
+        </div>
+        <div class="header-status">
+            <div class="status-item">
+                <div class="status-indicator online"></div>
+                <span>Sistem: <strong>Online</strong></span>
+            </div>
+            <div class="mode-toggle">
+                <i class="fas fa-sun"></i>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="modeSwitch">
+                    <span class="toggle-slider"></span>
+                </label>
+                <i class="fas fa-moon"></i>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Main Content -->
+    <main>
+        <!-- Dashboard Page -->
+        <section id="dashboard" class="page active">
+            <div class="hero">
+                <div class="hero-content">
+                    <h2>LARAS TRUCK</h2>
+                    <p>Inovasi Smart Hybrid dengan Sistem Penghancur dan Pemilah Sampah<br>Terintegrasi</p>
+                    <a href="#" class="btn" id="btn-monitor-now">Monitor Now</a>
+                    <a href="#" class="btn btn-outline" id="btn-learn-more">Learn More</a>
+                </div>
+            </div>
+            
+            <div class="dashboard-grid">
+                <div class="left-column">
+                    <div class="data-section">
+                        <h2 class="section-title">Jenis Sampah Terdeteksi</h2>
+                        <div class="card">
+                            <div class="waste-chart-container">
+                                <canvas id="wastePieChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="data-section">
+                        <h2 class="section-title">Suhu Ruang Penghancur</h2>
+                        <div class="temperature-box">
+                            <div class="temperature-value">42°C</div>
+                            <div class="temperature-status">Normal (-15°C)</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="right-column">
+                    <div class="data-section">
+                        <h2 class="section-title">Kapasitas Wadah Sampah</h2>
+                        <div class="waste-container">
+                            <div class="waste-item organik">
+                                <div class="waste-header">
+                                    <div class="waste-icon organik">
+                                        <i class="fas fa-leaf"></i>
+                                    </div>
+                                    <div class="waste-name">Wadah Organik</div>
+                                </div>
+                                <div class="waste-description">
+                                    Sampah organik seperti sisa makanan, daun, dan bahan alami lainnya.
+                                </div>
+                                <div class="progress-container">
+                                    <div class="progress-label">
+                                        <span>Kapasitas Terpakai</span>
+                                        <span>70%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill progress-organik" style="width: 70%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="waste-item anorganik">
+                                <div class="waste-header">
+                                    <div class="waste-icon anorganik">
+                                        <i class="fas fa-box"></i>
+                                    </div>
+                                    <div class="waste-name">Wadah Anorganik</div>
+                                </div>
+                                <div class="waste-description">
+                                    Sampah anorganik seperti plastik, kertas, logam, dan kaca.
+                                </div>
+                                <div class="progress-container">
+                                    <div class="progress-label">
+                                        <span>Kapasitas Terpakai</span>
+                                        <span>45%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill progress-anorganik" style="width: 45%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="motor-status">
+                        <h3>Status Motor</h3>
+                        <div class="motor-hybrid-status">
+                            <strong>Motor Hybrid:</strong>
+                            <span class="motor-active">Aktif + Normal</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Real-time Monitor Page -->
+        <section id="monitor" class="page">
+            <h2 class="section-title">Monitoring Real-Time</h2>
+            
+            <div class="monitor-grid">
+                <div class="left-column">
+                    <div class="card">
+                        <h3>Data Sensor Terkini</h3>
+                        <ul class="sensor-list">
+                            <li><i class="fas fa-thermometer-half"></i> Suhu Ruang Penghancur: 42°C</li>
+                            <li><i class="fas fa-tint"></i> Kelembaban: 65%</li>
+                            <li><i class="fas fa-wind"></i> Tekanan Udara: 1.2 atm</li>
+                            <li><i class="fas fa-cogs"></i> Getaran Mesin: 3.2 m/s²</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="right-column">
+                    <div class="chart-grid">
+                        <div class="chart-box">
+                            <h3 class="chart-title">Grafik Suhu per Menit</h3>
+                            <div class="waste-chart-container">
+                                <canvas id="tempChart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <div class="chart-box">
+                            <h3 class="chart-title">Grafik Kapasitas Wadah</h3>
+                            <div class="waste-chart-container">
+                                <canvas id="capacityChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Control Panel Page -->
+        <section id="control" class="page">
+            <h2 class="section-title">IoT Control Panel</h2>
+            
+            <div class="grid">
+                <div class="card">
+                    <h3>Status Konektivitas</h3>
+                    <div class="connectivity-status">
+                        <p><strong>Status Raspberry Pi:</strong> <span class="status-bubble connected">Terhubung</span></p>
+                        <p><strong>Koneksi ke Server:</strong> <span class="status-bubble connected">Terhubung</span></p>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>Protokol Komunikasi</h3>
+                    <ul style="list-style-type: none;">
+                        <li style="margin-bottom: 12px; display: flex; align-items: center;"><i class="fas fa-wifi" style="margin-right: 10px; color: var(--primary);"></i> WiFi</li>
+                        <li style="margin-bottom: 12px; display: flex; align-items: center;"><i class="fas fa-satellite-dish" style="margin-right: 10px; color: var(--primary);"></i> MQTT</li>
+                        <li style="margin-bottom: 12px; display: flex; align-items: center;"><i class="fas fa-globe" style="margin-right: 10px; color: var(--primary);"></i> HTTP</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="grid">
+                <div class="card">
+                    <h3>Maintenance</h3>
+                    <p><strong>Last Maintenance:</strong> 2025-01-15</p>
+                    <p><strong>Next Maintenance:</strong> 2025-02-15</p>
+                </div>
+                
+                <div class="card">
+                    <h3>Jadwal Perawatan</h3>
+                    <ul class="maintenance-list">
+                        <li class="maintenance-item">
+                            <span>Penggantian pisau rotor</span>
+                            <span>Setiap 3 bulan</span>
+                        </li>
+                        <li class="maintenance-item">
+                            <span>Pengecekan sensor thermal</span>
+                            <span>Setiap bulan</span>
+                        </li>
+                        <li class="maintenance-item">
+                            <span>Kalibrasi sensor</span>
+                            <span>Setiap 6 bulan</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Analytics Page -->
+        <section id="analytics" class="page">
+            <h2 class="section-title">Analisis Kinerja</h2>
+            
+            <div class="performance-grid">
+                <div class="performance-item">
+                    <div class="performance-value">92%</div>
+                    <div class="performance-label">Efisiensi Pemilahan</div>
+                </div>
+                <div class="performance-item">
+                    <div class="performance-value">245 kg</div>
+                    <div class="performance-label">Volume Sampah Harian</div>
+                </div>
+                <div class="performance-item">
+                    <div class="performance-value">18.5 jam</div>
+                    <div class="performance-label">Waktu Operasi</div>
+                </div>
+                <div class="performance-item">
+                    <div class="performance-value">85 kWh</div>
+                    <div class="performance-label">Penghematan Energi</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>SDG Impact</h3>
+                <div class="sdg-grid">
+                    <div class="sdg-item">
+                        <div class="sdg-icon sdg-7">7</div>
+                        <div>
+                            <h4>SDG 7: Affordable and Clean Energy</h4>
+                            <p>Menggunakan sistem hybrid yang efisien energi</p>
+                        </div>
+                    </div>
+                    <div class="sdg-item">
+                        <div class="sdg-icon sdg-11">11</div>
+                        <div>
+                            <h4>SDG 11: Sustainable Cities and Communities</h4>
+                            <p>Membantu pengelolaan sampah perkotaan yang berkelanjutan</p>
+                        </div>
+                    </div>
+                    <div class="sdg-item">
+                        <div class="sdg-icon sdg-12">12</div>
+                        <div>
+                            <h4>SDG 12: Responsible Consumption and Production</h4>
+                            <p>Meningkatkan daur ulang dan mengurangi limbah</p>
+                        </div>
+                    </div>
+                    <div class="sdg-item">
+                        <div class="sdg-icon sdg-13">13</div>
+                        <div>
+                            <h4>SDG 13: Climate Action</h4>
+                            <p>Berkontribusi pada pengurangan emisi gas rumah kaca</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- About Page -->
+        <section id="about" class="page">
+            <h2 class="section-title">Tentang LARAS TRUCK</h2>
+            
+            <div class="card">
+                <h3>Inovasi Smart Hybrid dengan Sistem Penghancur dan Pemilah Sampah Terintegrasi</h3>
+                <p>LARAS TRUCK adalah solusi inovatif untuk mengatasi masalah sampah perkotaan dengan mengintegrasikan teknologi penghancur dan pemilah sampah dalam satu sistem yang efisien. Sistem ini dirancang untuk memproses berbagai jenis sampah (organik dan anorganik) secara otomatis, mengurangi volume sampah hingga 70%, dan memfasilitasi daur ulang yang lebih efektif.</p>
+            </div>
+            
+            <div class="card">
+                <h3>Fitur Utama</h3>
+                <ul class="feature-list">
+                    <li class="feature-item">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Sistem pemilahan otomatis dan sensor canggih</span>
+                    </li>
+                    <li class="feature-item">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Penghancur sampah berkapasitas tinggi dengan konsumsi energi rendah</span>
+                    </li>
+                    <li class="feature-item">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Monitoring real-time melalui dashboard terintegrasi</span>
+                    </li>
+                    <li class="feature-item">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Sistem hybrid yang dapat beroperasi dengan listrik atau tenaga surya</span>
+                    </li>
+                    <li class="feature-item">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Pengumpulan data analitik untuk optimasi proses</span>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="card">
+                <h3>Pemantauan Berbasis Web</h3>
+                <p>Seluruh proses pada LARAS TRUCK dapat dipantau melalui sistem pemantauan berbasis web yang terhubung langsung dengan Raspberry Pi Model B+. Data dari sensor dikirimkan ke server menggunakan protokol komunikasi seperti MQTT atau HTTP sehingga informasi mengenai jenis sampah, suhu ruang penghancur, kapasitas wadah, serta status motor dapat diperbarui secara real-time. Antarmuka web menampilkan data tersebut dalam bentuk grafik dan indikator status sehingga operator dapat memantau kinerja kendaraan dari jarak jauh. Sistem ini juga mampu memberikan notifikasi ketika terjadi kondisi tertentu seperti beban berlebih, kenaikan suhu yang tidak wajar, atau hambatan pada sistem pemilahan. Dengan demikian, pemantauan berbasis web meningkatkan keandalan operasional LARAS TRUCK serta memastikan proses pengolahan berjalan lebih efisien dan terkendali.</p>
+            </div>
+            
+            <div class="card">
+                <h3>Tim Pengembangan</h3>
+                <div class="team-member">
+                    <div class="avatar">
+                        <!-- Ganti dengan path foto Anda -->
+                        <img src="Gambar 2.jpg" alt="Rochman Rachmadhani" onerror="this.style.display='none'; this.parentNode.innerHTML='RR';">
+                    </div>
+                    <div>
+                        <h4>Rochman Rachmadhani</h4>
+                        <p>Project Lead</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Login Page -->
+        <section id="login" class="page">
+            <h2 class="section-title">Log In</h2>
+            
+            <div class="login-container">
+                <form>
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" class="form-control" placeholder="Masukkan username">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" class="form-control" placeholder="Masukkan password">
+                    </div>
+                    
+                    <button type="submit" class="btn-login">Log In</button>
+                </form>
+                
+                <div class="copyright">
+                    © 2025 LARAS TRUCK - Inovasi Smart Hybrid dengan Sistem Penghancur dan Pemilah Sampah Terintegrasi
+                </div>
+            </div>
+        </section>
+        
+        <footer>
+            <div class="container">
+                <p>&copy; 2025 LARAS TRUCK - Inovasi Smart Hybrid dengan Sistem Penghancur dan Pemilah Sampah Terintegrasi</p>
+            </div>
+        </footer>
+    </main>
+
+    <!-- Sidebar Kanan -->
+    <aside class="sidebar">
+        <div class="logo">
+            <i class="fas fa-truck-loading"></i>
+            <h1>LARAS TRUCK</h1>
+        </div>
+        <nav class="sidebar-nav">
+            <ul>
+                <li><a href="#" class="nav-link active" data-page="dashboard"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
+                <li><a href="#" class="nav-link" data-page="monitor"><i class="fas fa-chart-line"></i> <span>Real-time Monitor</span></a></li>
+                <li><a href="#" class="nav-link" data-page="control"><i class="fas fa-cogs"></i> <span>Control Panel</span></a></li>
+                <li><a href="#" class="nav-link" data-page="analytics"><i class="fas fa-chart-bar"></i> <span>Analytics</span></a></li>
+                <li><a href="#" class="nav-link" data-page="about"><i class="fas fa-info-circle"></i> <span>About</span></a></li>
+                <li><a href="#" class="nav-link" data-page="login"><i class="fas fa-sign-in-alt"></i> <span>Log in</span></a></li>
+            </ul>
+        </nav>
+    </aside>
+    
+    <script>
+        // Navigasi antar halaman dengan animasi
+        document.addEventListener('DOMContentLoaded', function() {
+            const navLinks = document.querySelectorAll('.nav-link');
+            const pages = document.querySelectorAll('.page');
+            
+            // Fungsi untuk mengganti halaman dengan animasi
+            function switchPage(pageId) {
+                // Hapus kelas active dari semua link dan halaman
+                navLinks.forEach(l => l.classList.remove('active'));
+                pages.forEach(p => {
+                    p.classList.remove('active');
+                    p.style.display = 'none';
+                });
+                
+                // Tambah kelas active ke link yang sesuai
+                document.querySelector(`.nav-link[data-page="${pageId}"]`).classList.add('active');
+                
+                // Tampilkan halaman yang sesuai dengan animasi
+                const targetPage = document.getElementById(pageId);
+                targetPage.style.display = 'block';
+                
+                // Trigger reflow untuk memastikan animasi berjalan
+                void targetPage.offsetWidth;
+                
+                // Tambah kelas active untuk memulai animasi
+                setTimeout(() => {
+                    targetPage.classList.add('active');
+                }, 50);
+            }
+            
+            // Event listener untuk navigasi menu
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const pageId = this.getAttribute('data-page');
+                    switchPage(pageId);
+                });
+            });
+            
+            // Event listener untuk tombol "Monitor Now"
+            document.getElementById('btn-monitor-now').addEventListener('click', function(e) {
+                e.preventDefault();
+                switchPage('monitor');
+            });
+            
+            // Event listener untuk tombol "Learn More"
+            document.getElementById('btn-learn-more').addEventListener('click', function(e) {
+                e.preventDefault();
+                switchPage('about');
+            });
+            
+            // Toggle Mode Malam/Siang
+            const modeSwitch = document.getElementById('modeSwitch');
+            modeSwitch.addEventListener('change', function() {
+                document.body.classList.toggle('night-mode', this.checked);
+            });
+            
+            // Animasi progress bars
+            const progressBars = document.querySelectorAll('.progress-fill');
+            progressBars.forEach(bar => {
+                const width = bar.style.width;
+                bar.style.width = '0';
+                setTimeout(() => {
+                    bar.style.width = width;
+                }, 300);
+            });
+            
+            // Inisialisasi Chart.js untuk diagram
+            // Diagram Pie Jenis Sampah
+            const wastePieCtx = document.getElementById('wastePieChart').getContext('2d');
+            const wastePieChart = new Chart(wastePieCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['Organik (147 kg)', 'Anorganik (98 kg)'],
+                    datasets: [{
+                        data: [147, 98],
+                        backgroundColor: ['#b4d4b4', '#b4c4e8'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Grafik Suhu per Menit
+            const tempCtx = document.getElementById('tempChart').getContext('2d');
+            const tempChart = new Chart(tempCtx, {
+                type: 'line',
+                data: {
+                    labels: ['10:00', '10:01', '10:02', '10:03', '10:04', '10:05'],
+                    datasets: [{
+                        label: 'Suhu',
+                        data: [38, 40, 42, 41, 39, 42],
+                        borderColor: '#6c87b5',
+                        backgroundColor: 'rgba(108, 135, 181, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#6c87b5',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            min: 35,
+                            max: 45,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Grafik Kapasitas Wadah
+            const capacityCtx = document.getElementById('capacityChart').getContext('2d');
+            const capacityChart = new Chart(capacityCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Organik', 'Anorganik'],
+                    datasets: [{
+                        label: 'Kapasitas Terpakai',
+                        data: [70, 45],
+                        backgroundColor: ['#b4d4b4', '#b4c4e8'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%'; // Menampilkan simbol %
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    barPercentage: 0.6, // Mengatur lebar bar
+                    categoryPercentage: 0.8 // Mengatur jarak antar kategori
+                }
+            });
+        });
+    </script>
+</body>
+</html>
