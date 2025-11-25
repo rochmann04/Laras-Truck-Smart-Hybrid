@@ -502,6 +502,12 @@
             justify-content: space-between;
             margin-bottom: 8px;
             font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .progress-label:hover {
+            color: var(--primary);
         }
         
         .progress-bar {
@@ -597,6 +603,13 @@
         .temperature-status {
             font-size: 1.2rem;
             font-weight: 500;
+            margin-bottom: 10px;
+        }
+        
+        .temperature-info {
+            font-size: 1.2rem;
+            margin-top: 15px;
+            line-height: 1.4;
         }
         
         .waste-container {
@@ -676,6 +689,17 @@
         }
         
         body.night-mode .waste-description {
+            color: var(--text-night);
+        }
+        
+        .capacity-info {
+            margin-top: 8px;
+            font-size: 0.9rem;
+            color: var(--text);
+            text-align: right;
+        }
+        
+        body.night-mode .capacity-info {
             color: var(--text-night);
         }
         
@@ -984,46 +1008,6 @@
             color: var(--text-night);
         }
         
-        /* Jenis Sampah Terdeteksi */
-        .waste-detection {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-top: 15px;
-        }
-        
-        .waste-type {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px;
-            background-color: rgba(255, 255, 255, 0.7);
-            border-radius: 8px;
-            border-left: 4px solid;
-        }
-        
-        body.night-mode .waste-type {
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-        
-        .waste-type.organik {
-            border-left-color: var(--organik);
-        }
-        
-        .waste-type.anorganik {
-            border-left-color: var(--anorganik);
-        }
-        
-        .waste-type-name {
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
-        
-        .waste-type-value {
-            font-size: 1.3rem;
-            font-weight: 700;
-        }
-        
         /* Form Login yang Lebih Estetik */
         .login-container {
             max-width: 400px;
@@ -1099,6 +1083,68 @@
         body.night-mode .copyright {
             border-top: 1px solid #444;
             color: var(--text-night);
+        }
+        
+        /* Keterangan Diagram Pie */
+        .chart-legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 15px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+        }
+        
+        .legend-color.organik {
+            background-color: var(--organik);
+        }
+        
+        .legend-color.anorganik {
+            background-color: var(--anorganik);
+        }
+        
+        /* Style untuk tooltip pada chart */
+        .chart-tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            pointer-events: none;
+            z-index: 1000;
+            display: none;
+        }
+        
+        /* Animasi untuk kapasitas terpakai */
+        .capacity-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: var(--primary);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            z-index: 2000;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+        }
+        
+        .capacity-popup.show {
+            transform: translate(-50%, -50%) scale(1);
         }
         
         /* Responsif */
@@ -1189,11 +1235,17 @@
             .main-header {
                 padding: 10px 15px;
             }
+            
+            .chart-legend {
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Header dengan Kop Website - DIATAS SEGALANYA -->
+    <!-- Header dengan Kop Website - DIATAS SIDEBAR -->
     <header class="main-header">
         <div class="logo-header">
             <i class="fas fa-truck-loading logo-icon"></i>
@@ -1236,8 +1288,19 @@
                     <div class="data-section">
                         <h2 class="section-title">Jenis Sampah Terdeteksi</h2>
                         <div class="card">
+                            <!-- Diagram Pie saja, tanpa popup keterangan -->
                             <div class="waste-chart-container">
                                 <canvas id="wastePieChart"></canvas>
+                            </div>
+                            <div class="chart-legend">
+                                <div class="legend-item">
+                                    <div class="legend-color organik"></div>
+                                    <span>Organik</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-color anorganik"></div>
+                                    <span>Anorganik</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1245,8 +1308,11 @@
                     <div class="data-section">
                         <h2 class="section-title">Suhu Ruang Penghancur</h2>
                         <div class="temperature-box">
-                            <div class="temperature-value">42°C</div>
-                            <div class="temperature-status">Normal (-15°C)</div>
+                            <div class="temperature-value">75°C <span style="font-size: 1.5rem;">(Normal)</span></div>
+                            <div class="temperature-status">Rentang Normal: 60-90°C</div>
+                            <div class="temperature-info">
+                                <div>Suhu Maksimal Absolut: 110°C</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1266,14 +1332,15 @@
                                     Sampah organik seperti sisa makanan, daun, dan bahan alami lainnya.
                                 </div>
                                 <div class="progress-container">
-                                    <div class="progress-label">
-                                        <span>Kapasitas Terpakai</span>
+                                    <div class="progress-label" data-kg="105 kg">
+                                        <span>Kapasitas Terpakai:</span>
                                         <span>70%</span>
                                     </div>
                                     <div class="progress-bar">
                                         <div class="progress-fill progress-organik" style="width: 70%"></div>
                                     </div>
                                 </div>
+                                <div class="capacity-info">Kapasitas Maksimal: 150 kg</div>
                             </div>
                             
                             <div class="waste-item anorganik">
@@ -1287,14 +1354,15 @@
                                     Sampah anorganik seperti plastik, kertas, logam, dan kaca.
                                 </div>
                                 <div class="progress-container">
-                                    <div class="progress-label">
-                                        <span>Kapasitas Terpakai</span>
+                                    <div class="progress-label" data-kg="54 kg">
+                                        <span>Kapasitas Terpakai:</span>
                                         <span>45%</span>
                                     </div>
                                     <div class="progress-bar">
                                         <div class="progress-fill progress-anorganik" style="width: 45%"></div>
                                     </div>
                                 </div>
+                                <div class="capacity-info">Kapasitas Maksimal: 120 kg</div>
                             </div>
                         </div>
                     </div>
@@ -1319,7 +1387,7 @@
                     <div class="card">
                         <h3>Data Sensor Terkini</h3>
                         <ul class="sensor-list">
-                            <li><i class="fas fa-thermometer-half"></i> Suhu Ruang Penghancur: 42°C</li>
+                            <li><i class="fas fa-thermometer-half"></i> Suhu Ruang Penghancur: 75°C (Normal)</li>
                             <li><i class="fas fa-tint"></i> Kelembaban: 65%</li>
                             <li><i class="fas fa-wind"></i> Tekanan Udara: 1.2 atm</li>
                             <li><i class="fas fa-cogs"></i> Getaran Mesin: 3.2 m/s²</li>
@@ -1337,7 +1405,7 @@
                         </div>
                         
                         <div class="chart-box">
-                            <h3 class="chart-title">Grafik Kapasitas Wadah</h3>
+                            <h3 class="chart-title">Grafik Kapasitas Wadah (kg)</h3>
                             <div class="waste-chart-container">
                                 <canvas id="capacityChart"></canvas>
                             </div>
@@ -1349,7 +1417,7 @@
         
         <!-- Control Panel Page -->
         <section id="control" class="page">
-            <h2 class="section-title">IoT Control Panel</h2>
+            <h2 class="section-title">Panel Kontrol IoT</h2>
             
             <div class="grid">
                 <div class="card">
@@ -1372,9 +1440,9 @@
             
             <div class="grid">
                 <div class="card">
-                    <h3>Maintenance</h3>
-                    <p><strong>Last Maintenance:</strong> 2025-01-15</p>
-                    <p><strong>Next Maintenance:</strong> 2025-02-15</p>
+                    <h3>Pemeliharaan</h3>
+                    <p><strong>Pemeliharaan Terakhir:</strong> 15 Jan 2025</p>
+                    <p><strong>Pemeliharaan Berikutnya:</strong> 15 Feb 2025</p>
                 </div>
                 
                 <div class="card">
@@ -1385,7 +1453,7 @@
                             <span>Setiap 3 bulan</span>
                         </li>
                         <li class="maintenance-item">
-                            <span>Pengecekan sensor thermal</span>
+                            <span>Pengecekan sensor termal</span>
                             <span>Setiap bulan</span>
                         </li>
                         <li class="maintenance-item">
@@ -1461,7 +1529,7 @@
             
             <div class="card">
                 <h3>Inovasi Smart Hybrid dengan Sistem Penghancur dan Pemilah Sampah Terintegrasi</h3>
-                <p>LARAS TRUCK adalah solusi inovatif untuk mengatasi masalah sampah perkotaan dengan mengintegrasikan teknologi penghancur dan pemilah sampah dalam satu sistem yang efisien. Sistem ini dirancang untuk memproses berbagai jenis sampah (organik dan anorganik) secara otomatis, mengurangi volume sampah hingga 70%, dan memfasilitasi daur ulang yang lebih efektif.</p>
+                <p style="text-align: justify;">LARAS TRUCK adalah solusi inovatif untuk mengatasi masalah sampah perkotaan dengan mengintegrasikan teknologi penghancur dan pemilah sampah dalam satu sistem yang efisien. Sistem ini dirancang untuk memproses berbagai jenis sampah (organik dan anorganik) secara otomatis, mengurangi volume sampah hingga 70%, dan memfasilitasi daur ulang yang lebih efektif.</p>
             </div>
             
             <div class="card">
@@ -1492,7 +1560,7 @@
             
             <div class="card">
                 <h3>Pemantauan Berbasis Web</h3>
-                <p>Seluruh proses pada LARAS TRUCK dapat dipantau melalui sistem pemantauan berbasis web yang terhubung langsung dengan Raspberry Pi Model B+. Data dari sensor dikirimkan ke server menggunakan protokol komunikasi seperti MQTT atau HTTP sehingga informasi mengenai jenis sampah, suhu ruang penghancur, kapasitas wadah, serta status motor dapat diperbarui secara real-time. Antarmuka web menampilkan data tersebut dalam bentuk grafik dan indikator status sehingga operator dapat memantau kinerja kendaraan dari jarak jauh. Sistem ini juga mampu memberikan notifikasi ketika terjadi kondisi tertentu seperti beban berlebih, kenaikan suhu yang tidak wajar, atau hambatan pada sistem pemilahan. Dengan demikian, pemantauan berbasis web meningkatkan keandalan operasional LARAS TRUCK serta memastikan proses pengolahan berjalan lebih efisien dan terkendali.</p>
+                <p style="text-align: justify;">Seluruh proses pada LARAS TRUCK dapat dipantau melalui sistem pemantauan berbasis web yang terhubung langsung dengan Raspberry Pi Model B+. Data dari sensor dikirimkan ke server menggunakan protokol komunikasi seperti MQTT atau HTTP sehingga informasi mengenai jenis sampah, suhu ruang penghancur, kapasitas wadah, serta status motor dapat diperbarui secara real-time. Antarmuka web menampilkan data tersebut dalam bentuk grafik dan indikator status sehingga operator dapat memantau kinerja kendaraan dari jarak jauh. Sistem ini juga mampu memberikan notifikasi ketika terjadi kondisi tertentu seperti beban berlebih, kenaikan suhu yang tidak wajar, atau hambatan pada sistem pemilahan. Dengan demikian, pemantauan berbasis web meningkatkan keandalan operasional LARAS TRUCK serta memastikan proses pengolahan berjalan lebih efisien dan terkendali.</p>
             </div>
             
             <div class="card">
@@ -1559,6 +1627,12 @@
             </ul>
         </nav>
     </aside>
+    
+    <!-- Tooltip untuk chart -->
+    <div class="chart-tooltip" id="chartTooltip"></div>
+    
+    <!-- Popup untuk kapasitas terpakai -->
+    <div class="capacity-popup" id="capacityPopup"></div>
     
     <script>
         // Navigasi antar halaman dengan animasi
@@ -1628,13 +1702,29 @@
                 }, 300);
             });
             
+            // Animasi untuk kapasitas terpakai
+            const progressLabels = document.querySelectorAll('.progress-label');
+            const capacityPopup = document.getElementById('capacityPopup');
+            
+            progressLabels.forEach(label => {
+                label.addEventListener('click', function() {
+                    const kgValue = this.getAttribute('data-kg');
+                    capacityPopup.textContent = `Kapasitas Terpakai: ${kgValue}`;
+                    capacityPopup.classList.add('show');
+                    
+                    setTimeout(() => {
+                        capacityPopup.classList.remove('show');
+                    }, 2000);
+                });
+            });
+            
             // Inisialisasi Chart.js untuk diagram
             // Diagram Pie Jenis Sampah
             const wastePieCtx = document.getElementById('wastePieChart').getContext('2d');
             const wastePieChart = new Chart(wastePieCtx, {
                 type: 'pie',
                 data: {
-                    labels: ['Organik (147 kg)', 'Anorganik (98 kg)'],
+                    labels: ['Organik', 'Anorganik'],
                     datasets: [{
                         data: [147, 98],
                         backgroundColor: ['#b4d4b4', '#b4c4e8'],
@@ -1646,11 +1736,13 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: {
-                            position: 'bottom',
-                            labels: {
-                                padding: 20,
-                                usePointStyle: true,
-                                pointStyle: 'circle'
+                            display: false // Nonaktifkan legend bawaan karena kita buat custom
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.parsed} kg`;
+                                }
                             }
                         }
                     }
@@ -1665,7 +1757,7 @@
                     labels: ['10:00', '10:01', '10:02', '10:03', '10:04', '10:05'],
                     datasets: [{
                         label: 'Suhu',
-                        data: [38, 40, 42, 41, 39, 42],
+                        data: [72, 74, 75, 73, 76, 75],
                         borderColor: '#6c87b5',
                         backgroundColor: 'rgba(108, 135, 181, 0.1)',
                         tension: 0.4,
@@ -1687,10 +1779,14 @@
                     scales: {
                         y: {
                             beginAtZero: false,
-                            min: 35,
-                            max: 45,
+                            min: 60,
+                            max: 90,
                             grid: {
                                 color: 'rgba(0, 0, 0, 0.1)'
+                            },
+                            title: {
+                                display: true,
+                                text: 'Suhu (°C)'
                             }
                         },
                         x: {
@@ -1702,15 +1798,15 @@
                 }
             });
             
-            // Grafik Kapasitas Wadah
+            // Grafik Kapasitas Wadah (dalam kg)
             const capacityCtx = document.getElementById('capacityChart').getContext('2d');
             const capacityChart = new Chart(capacityCtx, {
                 type: 'bar',
                 data: {
                     labels: ['Organik', 'Anorganik'],
                     datasets: [{
-                        label: 'Kapasitas Terpakai',
-                        data: [70, 45],
+                        label: 'Berat (kg)',
+                        data: [105, 54],
                         backgroundColor: ['#b4d4b4', '#b4c4e8'],
                         borderWidth: 0
                     }]
@@ -1721,19 +1817,33 @@
                     plugins: {
                         legend: {
                             display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const labels = ['Organik', 'Anorganik'];
+                                    const maxCapacity = [150, 120];
+                                    const percentage = ((context.parsed.y / maxCapacity[context.dataIndex]) * 100).toFixed(1);
+                                    return `${labels[context.dataIndex]}: ${context.parsed.y} kg (${percentage}%)`;
+                                }
+                            }
                         }
                     },
                     scales: {
                         y: {
                             beginAtZero: true,
-                            max: 100,
+                            max: 150,
                             ticks: {
                                 callback: function(value) {
-                                    return value + '%'; // Menampilkan simbol %
+                                    return value + ' kg';
                                 }
                             },
                             grid: {
                                 color: 'rgba(0, 0, 0, 0.1)'
+                            },
+                            title: {
+                                display: true,
+                                text: 'Berat (kg)'
                             }
                         },
                         x: {
@@ -1742,9 +1852,34 @@
                             }
                         }
                     },
-                    barPercentage: 0.6, // Mengatur lebar bar
-                    categoryPercentage: 0.8 // Mengatur jarak antar kategori
+                    barPercentage: 0.6,
+                    categoryPercentage: 0.8
                 }
+            });
+            
+            // Tambahkan event listener untuk interaksi dengan diagram batang
+            const capacityCanvas = document.getElementById('capacityChart');
+            const tooltip = document.getElementById('chartTooltip');
+            
+            capacityCanvas.addEventListener('mousemove', function(event) {
+                const points = capacityChart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true);
+                
+                if (points.length) {
+                    const firstPoint = points[0];
+                    const value = capacityChart.data.datasets[firstPoint.datasetIndex].data[firstPoint.index];
+                    const label = capacityChart.data.labels[firstPoint.index];
+                    
+                    tooltip.style.display = 'block';
+                    tooltip.innerHTML = `<strong>${label}</strong><br>${value} kg`;
+                    tooltip.style.left = (event.pageX + 10) + 'px';
+                    tooltip.style.top = (event.pageY - 30) + 'px';
+                } else {
+                    tooltip.style.display = 'none';
+                }
+            });
+            
+            capacityCanvas.addEventListener('mouseout', function() {
+                tooltip.style.display = 'none';
             });
         });
     </script>
