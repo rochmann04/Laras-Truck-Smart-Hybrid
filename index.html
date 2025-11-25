@@ -329,7 +329,7 @@
         
         /* Hero Section */
         .hero {
-            background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1587332278431-202f5c5a0b63?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80');
+            background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('Gambar 1.jpeg');
             background-size: cover;
             background-position: center;
             color: var(--white);
@@ -495,6 +495,7 @@
         /* Progress Bar dengan Warna Soft */
         .progress-container {
             margin-bottom: 18px;
+            position: relative;
         }
         
         .progress-label {
@@ -502,12 +503,6 @@
             justify-content: space-between;
             margin-bottom: 8px;
             font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .progress-label:hover {
-            color: var(--primary);
         }
         
         .progress-bar {
@@ -515,6 +510,7 @@
             background-color: var(--gray);
             border-radius: 5px;
             overflow: hidden;
+            position: relative;
         }
         
         body.night-mode .progress-bar {
@@ -1126,25 +1122,17 @@
             display: none;
         }
         
-        /* Animasi untuk kapasitas terpakai */
-        .capacity-popup {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0);
-            background: var(--primary);
+        /* Tooltip untuk progress bar */
+        .progress-tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
             color: white;
-            padding: 20px 30px;
-            border-radius: 10px;
-            font-size: 1.5rem;
-            font-weight: 700;
-            z-index: 2000;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-            transition: transform 0.3s ease;
-        }
-        
-        .capacity-popup.show {
-            transform: translate(-50%, -50%) scale(1);
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            pointer-events: none;
+            z-index: 1000;
+            display: none;
         }
         
         /* Responsif */
@@ -1332,7 +1320,7 @@
                                     Sampah organik seperti sisa makanan, daun, dan bahan alami lainnya.
                                 </div>
                                 <div class="progress-container">
-                                    <div class="progress-label" data-kg="105 kg">
+                                    <div class="progress-label">
                                         <span>Kapasitas Terpakai:</span>
                                         <span>70%</span>
                                     </div>
@@ -1354,7 +1342,7 @@
                                     Sampah anorganik seperti plastik, kertas, logam, dan kaca.
                                 </div>
                                 <div class="progress-container">
-                                    <div class="progress-label" data-kg="54 kg">
+                                    <div class="progress-label">
                                         <span>Kapasitas Terpakai:</span>
                                         <span>45%</span>
                                     </div>
@@ -1568,7 +1556,7 @@
                 <div class="team-member">
                     <div class="avatar">
                         <!-- Ganti dengan path foto Anda -->
-                        <img src="Gambar 2.jpg" alt="Rochman Rachmadhani" onerror="this.style.display='none'; this.parentNode.innerHTML='RR';">
+                        <img src="Gambar 2.jpeg" alt="Rochman Rachmadhani" onerror="this.style.display='none'; this.parentNode.innerHTML='RR';">
                     </div>
                     <div>
                         <h4>Rochman Rachmadhani</h4>
@@ -1597,9 +1585,7 @@
                     <button type="submit" class="btn-login">Log In</button>
                 </form>
                 
-                <div class="copyright">
-                    © 2025 LARAS TRUCK - Inovasi Smart Hybrid dengan Sistem Penghancur dan Pemilah Sampah Terintegrasi
-                </div>
+                <!-- Copyright di halaman login dihapus sesuai permintaan -->
             </div>
         </section>
         
@@ -1631,8 +1617,8 @@
     <!-- Tooltip untuk chart -->
     <div class="chart-tooltip" id="chartTooltip"></div>
     
-    <!-- Popup untuk kapasitas terpakai -->
-    <div class="capacity-popup" id="capacityPopup"></div>
+    <!-- Tooltip untuk progress bar -->
+    <div class="progress-tooltip" id="progressTooltip"></div>
     
     <script>
         // Navigasi antar halaman dengan animasi
@@ -1702,19 +1688,33 @@
                 }, 300);
             });
             
-            // Animasi untuk kapasitas terpakai
-            const progressLabels = document.querySelectorAll('.progress-label');
-            const capacityPopup = document.getElementById('capacityPopup');
+            // Tooltip untuk progress bar
+            const progressContainers = document.querySelectorAll('.progress-container');
+            const progressTooltip = document.getElementById('progressTooltip');
             
-            progressLabels.forEach(label => {
-                label.addEventListener('click', function() {
-                    const kgValue = this.getAttribute('data-kg');
-                    capacityPopup.textContent = `Kapasitas Terpakai: ${kgValue}`;
-                    capacityPopup.classList.add('show');
+            progressContainers.forEach(container => {
+                const progressBar = container.querySelector('.progress-bar');
+                const progressLabel = container.querySelector('.progress-label span:last-child');
+                
+                progressBar.addEventListener('mousemove', function(e) {
+                    const percentage = progressLabel.textContent;
+                    let kgValue = '';
                     
-                    setTimeout(() => {
-                        capacityPopup.classList.remove('show');
-                    }, 2000);
+                    // Tentukan nilai kg berdasarkan jenis wadah
+                    if (container.closest('.waste-item.organik')) {
+                        kgValue = '105 kg';
+                    } else if (container.closest('.waste-item.anorganik')) {
+                        kgValue = '54 kg';
+                    }
+                    
+                    progressTooltip.textContent = `Kapasitas Terpakai: ${percentage} (${kgValue})`;
+                    progressTooltip.style.display = 'block';
+                    progressTooltip.style.left = (e.pageX + 10) + 'px';
+                    progressTooltip.style.top = (e.pageY - 30) + 'px';
+                });
+                
+                progressBar.addEventListener('mouseout', function() {
+                    progressTooltip.style.display = 'none';
                 });
             });
             
@@ -1819,12 +1819,21 @@
                             display: false
                         },
                         tooltip: {
+                            enabled: true,
+                            mode: 'nearest',
+                            intersect: false,
                             callbacks: {
+                                title: function() {
+                                    // Nonaktifkan title
+                                    return '';
+                                },
                                 label: function(context) {
                                     const labels = ['Organik', 'Anorganik'];
                                     const maxCapacity = [150, 120];
-                                    const percentage = ((context.parsed.y / maxCapacity[context.dataIndex]) * 100).toFixed(1);
-                                    return `${labels[context.dataIndex]}: ${context.parsed.y} kg (${percentage}%)`;
+                                    const value = context.parsed.y;
+                                    const index = context.dataIndex;
+                                    const percentage = ((value / maxCapacity[index]) * 100).toFixed(1);
+                                    return `${labels[index]}: ${value} kg (${percentage}%)`;
                                 }
                             }
                         }
@@ -1855,31 +1864,6 @@
                     barPercentage: 0.6,
                     categoryPercentage: 0.8
                 }
-            });
-            
-            // Tambahkan event listener untuk interaksi dengan diagram batang
-            const capacityCanvas = document.getElementById('capacityChart');
-            const tooltip = document.getElementById('chartTooltip');
-            
-            capacityCanvas.addEventListener('mousemove', function(event) {
-                const points = capacityChart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true);
-                
-                if (points.length) {
-                    const firstPoint = points[0];
-                    const value = capacityChart.data.datasets[firstPoint.datasetIndex].data[firstPoint.index];
-                    const label = capacityChart.data.labels[firstPoint.index];
-                    
-                    tooltip.style.display = 'block';
-                    tooltip.innerHTML = `<strong>${label}</strong><br>${value} kg`;
-                    tooltip.style.left = (event.pageX + 10) + 'px';
-                    tooltip.style.top = (event.pageY - 30) + 'px';
-                } else {
-                    tooltip.style.display = 'none';
-                }
-            });
-            
-            capacityCanvas.addEventListener('mouseout', function() {
-                tooltip.style.display = 'none';
             });
         });
     </script>
